@@ -1,4 +1,4 @@
-import { Alert, cn, ScrollShadow } from "@heroui/react";
+import { cn, ScrollShadow } from "@heroui/react";
 import LogoSVG from "./assets/logo.svg";
 import HeaderSVG from "./assets/header.svg";
 import { useRef, useState } from "react";
@@ -13,7 +13,7 @@ import { convertToICNS } from "./convert";
 
 export default function App() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [results, setResults] = useState<Result[]>([]);
+  const [results] = useState<Result[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const convertFiles = (files: File[]) => {
