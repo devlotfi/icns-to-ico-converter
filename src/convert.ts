@@ -1,10 +1,7 @@
+import type { Result } from "./types/result";
+
 interface BlobWithSize {
   size: number;
-  blob: Blob;
-}
-
-interface NamedBlob {
-  fileName: string;
   blob: Blob;
 }
 
@@ -222,7 +219,7 @@ async function pickLargestByResolution(blobs: Blob[]) {
 /* -----------------------------------
    Main Convert Function
 ----------------------------------- */
-export async function convertToICNS(file: File): Promise<NamedBlob | null> {
+export async function convertToICNS(file: File): Promise<Result | null> {
   const buffer = await readFile(file);
   const images = parseICNS(buffer);
 
@@ -245,12 +242,12 @@ export async function convertToICNS(file: File): Promise<NamedBlob | null> {
   const outputFileName = `${baseName}.ico`;
 
   // ✅ Return the blob with its filename
-  const result: NamedBlob = {
+  const result: Result = {
     fileName: outputFileName,
     blob: icoBlob,
   };
 
-  if (result) {
+  /*   if (result) {
     const url = URL.createObjectURL(result.blob);
 
     const a = document.createElement("a");
@@ -259,7 +256,7 @@ export async function convertToICNS(file: File): Promise<NamedBlob | null> {
     a.click();
 
     URL.revokeObjectURL(url);
-  }
+  } */
 
   return result;
 }

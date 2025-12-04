@@ -1,4 +1,4 @@
 export interface Result {
-  name: string;
-  file: Blob;
+  fileName: string;
+  blob: Blob;
 }

@@ -61,11 +61,11 @@ export default heroui({
         },
       },
       colors: {
-        content1: "#1D232D",
-        content2: "#212A3A",
+        content1: "#212A3A",
+        content2: "#1D232D",
         content3: "#1A2131",
         background: {
-          DEFAULT: "#1D232D",
+          DEFAULT: "#212A3A",
         },
         divider: "#424d63",
         default: {
