@@ -49,6 +49,9 @@ export default function App() {
         });
       }
     },
+    onError(error) {
+      console.error(error);
+    },
   });
 
   const switchTheme = () => {

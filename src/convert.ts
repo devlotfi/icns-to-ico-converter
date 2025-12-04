@@ -204,12 +204,16 @@ async function pickLargestByResolution(blobs: Blob[]) {
   let bestPixels = 0;
 
   for (const blob of blobs) {
-    const img = await createImageBitmap(blob);
-    const pixels = img.width * img.height;
+    try {
+      const img = await createImageBitmap(blob);
+      const pixels = img.width * img.height;
 
-    if (pixels > bestPixels) {
-      bestPixels = pixels;
-      bestBlob = blob;
+      if (pixels > bestPixels) {
+        bestPixels = pixels;
+        bestBlob = blob;
+      }
+    } catch {
+      continue;
     }
   }
 
@@ -246,17 +250,6 @@ export async function convertToICNS(file: File): Promise<Result | null> {
     fileName: outputFileName,
     blob: icoBlob,
   };
-
-  /*   if (result) {
-    const url = URL.createObjectURL(result.blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = result.fileName;
-    a.click();
-
-    URL.revokeObjectURL(url);
-  } */
 
   return result;
 }
