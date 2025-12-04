@@ -12,10 +12,11 @@ export default function PWAProvider({ children }: PropsWithChildren) {
     useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    const handler = (e: BeforeInstallPromptEvent) => {
-      e.preventDefault();
-      console.log(e);
-      setBeforeInstallPromptEvent(e);
+    const handler = (e: Event) => {
+      const event = e as BeforeInstallPromptEvent;
+      event.preventDefault();
+      console.log(event);
+      setBeforeInstallPromptEvent(event);
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);

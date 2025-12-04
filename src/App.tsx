@@ -1,13 +1,14 @@
-import { Button, cn, Link, ScrollShadow } from "@heroui/react";
+import { Button, cn, Link, ScrollShadow, Spinner } from "@heroui/react";
 import LogoSVG from "./assets/logo.svg";
 import HeaderSVG from "./assets/header.svg";
-import { useContext, useRef, useState, type ComponentProps } from "react";
+import { useContext, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faComputer,
   faDownload,
   faFileExport,
   faFileImport,
+  faFileZipper,
   faMoon,
   faPaste,
   faSun,
@@ -19,57 +20,34 @@ import { ThemeOptions } from "./types/theme-options";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { PWAContext } from "./context/pwa-context";
 import { useMutation } from "@tanstack/react-query";
-
-function GradientCard({
-  className,
-  style,
-  children,
-  ...props
-}: ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "flex max-w-screen-md p-[1rem] lg:p-[1.5rem] rounded-3xl shadow-lg",
-        className
-      )}
-      style={{
-        boxShadow:
-          "inset 0 0 10px hsl(var(--heroui-content1) / 1), rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
-        backgroundImage:
-          "radial-gradient(at bottom, hsl(var(--heroui-primary) / 0.1), transparent 70%), linear-gradient(to top, hsl(var(--heroui-content1) / 1), hsl(var(--heroui-content2) / 1))",
-        ...style,
-      }}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
-
-function ResultComponent({ result }: { result: Result }) {
-  return (
-    <div className="flex">
-      <h1>test</h1>
-    </div>
-  );
-}
+import JSZip from "jszip";
+import { v4 as uuid } from "uuid";
+import GradientCard from "./components/geadient-card";
+import ResultComponent from "./components/result-component";
 
 export default function App() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [results, setResults] = useState<Result[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const { themeOption, setTheme } = useContext(ThemeContext);
   const { beforeInstallPromptEvent } = useContext(PWAContext);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (files: File[]) => {
       const newResults = await Promise.all(
-        files.map(async (file) => await convertToICNS(file))
+        files.map((file) => convertToICNS(file))
       );
       setResults([
-        ...results,
         ...newResults.filter((result) => result !== null),
+        ...results,
       ]);
+      if (resultsRef.current) {
+        resultsRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
     },
   });
 
@@ -148,7 +126,7 @@ export default function App() {
             "linear-gradient(to bottom, hsl(var(--heroui-content1) / 1), transparent 20%)",
         }}
       >
-        <div className="flex flex-col w-full max-w-screen-md">
+        <div className="flex flex-col w-full max-w-screen-md px-[1rem]">
           <div className="flex flex-col mt-[calc(25dvh-4rem)] justify-center items-center">
             <div className="flex flex-col gap-[1rem] justify-center items-center">
               <img src={HeaderSVG} alt="header" className="h-[7rem]" />
@@ -157,9 +135,7 @@ export default function App() {
               </div>
             </div>
 
-            <GradientCard>LOL</GradientCard>
-
-            <div
+            <GradientCard
               onDragOver={(e) => {
                 e.preventDefault();
                 setIsDragging(true);
@@ -174,10 +150,10 @@ export default function App() {
               }}
               onClick={() => inputRef.current?.click()}
               className={cn(
-                "flex flex-col w-full h-[15rem] mt-[2rem] mb-[3rem] justify-center items-center bg-content1 rounded-xl border-[0.15rem] border-dashed border-divider transition-background duration-150 cursor-pointer",
+                "w-full rounded-xl justify-center items-center h-[15rem] mt-[2rem] mb-[3rem] outline-[0.2rem] outline-divider outline-dotted outline-offset-[0.5rem]",
                 isDragging &&
-                  "outline-[0.2rem] outline-primary outline-offset-[0.5rem] bg-content1/50",
-                isPending && "opacity-10"
+                  "outline-primary outline-offset-[0.5rem] bg-content1/50",
+                isPending && "opacity-50"
               )}
             >
               <input
@@ -195,30 +171,69 @@ export default function App() {
                   isDragging && "opacity-50"
                 )}
               >
-                <FontAwesomeIcon
-                  icon={isDragging ? faPaste : faFileImport}
-                  className="text-[30pt]"
-                ></FontAwesomeIcon>
-                <div className="flex text-center text-[14pt] font-medium">
-                  {isDragging
-                    ? "Drop files here..."
-                    : "Drag files here or click to select"}
-                </div>
+                {isPending ? (
+                  <Spinner size="lg" color="primary"></Spinner>
+                ) : (
+                  <>
+                    <FontAwesomeIcon
+                      icon={isDragging ? faPaste : faFileImport}
+                      className="text-[30pt]"
+                    ></FontAwesomeIcon>
+                    <div className="flex text-center text-[14pt] font-medium">
+                      {isDragging
+                        ? "Drop files here..."
+                        : "Drag files here or click to select"}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
+            </GradientCard>
           </div>
 
           {results.length ? (
             <>
-              <div className="flex items-center gap-[1rem]">
-                <FontAwesomeIcon
-                  icon={faFileExport}
-                  className="text-[20pt]"
-                ></FontAwesomeIcon>
-                <div className="flex text-[20pt] font-bold">Results</div>
+              <div
+                ref={resultsRef}
+                className="flex items-center justify-between gap-[1rem] mb-[2rem]"
+              >
+                <div className="flex items-center gap-[1rem]">
+                  <FontAwesomeIcon
+                    icon={faFileExport}
+                    className="text-[20pt]"
+                  ></FontAwesomeIcon>
+                  <div className="flex text-[20pt] font-bold">Results</div>
+                </div>
+
+                <Button
+                  variant="shadow"
+                  color="primary"
+                  radius="full"
+                  className="pl-[0.7rem]"
+                  startContent={
+                    <FontAwesomeIcon
+                      icon={faFileZipper}
+                      className="text-[16pt]"
+                    ></FontAwesomeIcon>
+                  }
+                  onPress={async () => {
+                    const zip = new JSZip();
+                    results.forEach((result, index) => {
+                      zip.file(`${index + 1}-${result.fileName}`, result.blob);
+                    });
+                    const zipBlob = await zip.generateAsync({ type: "blob" });
+                    const url = URL.createObjectURL(zipBlob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `icons-${uuid()}.zip`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  .zip
+                </Button>
               </div>
 
-              <div className="flex flex-col gap-[1rem]">
+              <div className="flex flex-col gap-[1rem] pb-[5rem]">
                 {results.map((result, index) => (
                   <ResultComponent
                     key={index}
